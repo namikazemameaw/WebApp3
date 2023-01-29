@@ -8,41 +8,27 @@ using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 using System.Windows.Forms;
+using WebApp3.AppCode;
+using static WebApp3.AppCode.RequestModel;
+using static WebApp3.AppCode.ResponseModel;
 
 namespace WebApp3
 {
     public partial class Registration : System.Web.UI.Page
     {
-
-        public class RequstModel
-        {
-            public string firstname { get; set; }
-            public string middlename { get; set; }
-            public string lastname { get; set; }
-            public string email { get; set; }
-            public string phonenumber { get; set; }
-            public string username { get; set; }
-            public string password { get; set; }
-        }
-        public class ResponseModel
-        {
-            public bool status { get; set; }
-        }
-        //MySql.Data.MySqlClient.MySqlConnection conn;
-        //MySql.Data.MySqlClient.MySqlCommand cmd;
-        //string queryStr;
         protected void Page_Load(object sender, EventArgs e)
         {
-           
-            if (Session["counter"] == null)
+            if (!IsPostBack)
             {
-                Response.Redirect("Default.aspx");
+                if (Session["counter"] == null)
+                {
+                    Response.Redirect("Default.aspx");
+                }
+                else
+                {
 
-            }
-            else
-            {
 
-
+                }
             }
         }
         protected void home(object sender, EventArgs e)
@@ -57,42 +43,43 @@ namespace WebApp3
         }
         private void registerUser()
         {
-            RequstModel requst = new RequstModel();
-            requst.firstname = firstnameTextBox.Text;
-            requst.middlename = middlenameTextBox.Text;
-            requst.lastname = lastnameTextBox.Text;
-            requst.email = emailTextBox.Text;
-            requst.email = emailTextBox.Text;
-            requst.phonenumber = phonenumberTextBox.Text;
-            requst.username = usernameTextBox.Text;
-            requst.password = passwordTextBox.Text;
+            API api = new API();
+            RequestModel.RegistationRequestModel registationRequestModel = new RequestModel.RegistationRequestModel();
 
-            HttpClient httpClient = new HttpClient();
-            string json = JsonConvert.SerializeObject(requst);
-            var buffer = System.Text.Encoding.UTF8.GetBytes(json);
-            var byteContent = new ByteArrayContent(buffer);
-            byteContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-            var response = httpClient.PostAsync("https://localhost:44350/api/WebApp3", byteContent);
-            var respons2 = response.Result;
-            string responsestr = response.Result.Content.ReadAsStringAsync().Result;
+            registationRequestModel.firstname = firstnameTextBox.Text;
+            registationRequestModel.middlename = middlenameTextBox.Text;
+            registationRequestModel.lastname = lastnameTextBox.Text;
+            registationRequestModel.email = emailTextBox.Text;
+            registationRequestModel.email = emailTextBox.Text;
+            registationRequestModel.phonenumber = phonenumberTextBox.Text;
+            registationRequestModel.username = usernameTextBox.Text;
+            registationRequestModel.password = passwordTextBox.Text;
 
-            var account = JsonConvert.DeserializeObject<ResponseModel>(responsestr);
+            var account = JsonConvert.DeserializeObject<ResponseModel.StatusResponseModel>(api.apiRegistation(registationRequestModel));
 
-            if (account.status == true)
+            if (account.status == "true")
             {
                 string message = "Success";
                 MessageBox.Show(message);
-                Session["counter"] = "1";
+
                 Response.Redirect("Registration.aspx");
 
             }
-            
-            else 
+
+            else if (account.status == "duplicate")
             {
                 string message = "Duplicate Username";
                 MessageBox.Show(message);
-                Session["counter"] = "1";
+
                 Response.Redirect("Registration.aspx");
+            }
+            else
+            {
+                string message = "Invalid Data";
+                MessageBox.Show(message);
+
+                Response.Redirect("Registration.aspx");
+
             }
 
             //string connString = System.Configuration.ConfigurationManager.ConnectionStrings["WebAppConnString"].ToString();
@@ -109,6 +96,6 @@ namespace WebApp3
             //cmd.ExecuteReader();
 
             //conn.Close();
-        }
+        } 
     }
 }

@@ -23,37 +23,13 @@ using System.Text.RegularExpressions;
 using Button = System.Windows.Forms.Button;
 using System.Reflection;
 using System.Drawing;
+using WebApp3.AppCode;
+using static WebApp3.AppCode.RequestModel;
 
 namespace WebApp3
 {
     public partial class Admin : System.Web.UI.Page
     {
-
-
-        public class AdminApproveResponseModel
-        {
-            public int No { get; set; }
-            public string firstname { get; set; }
-            public string lastname { get; set; }
-            public string email { get; set; }
-            public string username { get; set; }
-            public string password { get; set; }
-
-
-        }
-        public class AdminApproveRequstModel
-        {
-            public int approve { get; set; }
-            public string username { get; set; }
-
-            public int disapprove { get; set; }
-        }
-
-        public class ResponseModel
-        {
-            public bool status { get; set; }
-        }
-
         protected void Page_Load(object sender, EventArgs e)
         {
             if (Session["counter"] == null)
@@ -61,15 +37,8 @@ namespace WebApp3
                 Response.Redirect("Default.aspx");
 
             }
-            else if (Session["counter"] == "1")
-            {
-                string message = "Please Login !!";
-                MessageBox.Show(message);
-                Response.Redirect("Default.aspx");
-                Session["counter"] = "1";
-
-            }
-            else if (Session["counter"] == "2")
+            
+            else if (Session["counter"] == "AdminPage")
             {
                 firstname.Text = Session["firstname"].ToString();
                 lastname.Text = Session["lastname"].ToString();
@@ -88,9 +57,9 @@ namespace WebApp3
                 {
                     html = reader.ReadToEnd();
 
-                    List<AdminApproveResponseModel> UserList = JsonConvert.DeserializeObject<List<AdminApproveResponseModel>>(html);
+                    List<ResponseModel.AdminApproveResponseModel> UserList = JsonConvert.DeserializeObject<List<ResponseModel.AdminApproveResponseModel>>(html);
 
-                    PropertyDescriptorCollection props = TypeDescriptor.GetProperties(typeof(AdminApproveResponseModel));
+                    PropertyDescriptorCollection props = TypeDescriptor.GetProperties(typeof(ResponseModel.AdminApproveResponseModel));
                     DataTable table = new DataTable();
 
                     for (int i = 0; i < props.Count; i++)
@@ -135,32 +104,23 @@ namespace WebApp3
         }
         protected void approve(object sender, EventArgs e)
         {
+            API api = new API();
+            RequestModel.AdminApproveRequstModel adminApproveRequstModel = new RequestModel.AdminApproveRequstModel();  
+
             string username = (sender as LinkButton).CommandArgument;
-            AdminApproveRequstModel requst = new AdminApproveRequstModel();
-            requst.approve = 1;
-            //requst.disapprove = 0;
-            requst.username = username;
 
-            HttpClient httpClient = new HttpClient();
-            string json = JsonConvert.SerializeObject(requst);
-            var buffer = System.Text.Encoding.UTF8.GetBytes(json);
-            var byteContent = new ByteArrayContent(buffer);
-            byteContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-            var response = httpClient.PostAsync("https://localhost:44350/api/AdminApprove", byteContent);
-            var respons2 = response.Result;
-            string responsestr = response.Result.Content.ReadAsStringAsync().Result;
+            adminApproveRequstModel.approve = 1;
+            adminApproveRequstModel.username = username;
 
-            var account = JsonConvert.DeserializeObject<ResponseModel>(responsestr);
+            var account = JsonConvert.DeserializeObject<ResponseModel.StatusResponseModel>(api.apiadminapprove(adminApproveRequstModel));
 
-            if (account.status == true)
+            if (account.status == "true")
             {
                 string message = "Success";
                 MessageBox.Show(message);
-
                 Response.Redirect("Admin.aspx");
 
             }
-
             else
             {
 
@@ -168,24 +128,17 @@ namespace WebApp3
         }
         protected void disapprove(object sender, EventArgs e)
         {
+            API api = new API();
+            RequestModel.AdminApproveRequstModel adminApproveRequstModel = new RequestModel.AdminApproveRequstModel();
+
             string username = (sender as LinkButton).CommandArgument;
-            AdminApproveRequstModel requst = new AdminApproveRequstModel();
-            //requst.approve = 0;
-            requst.disapprove = 2;
-            requst.username = username;
 
-            HttpClient httpClient = new HttpClient();
-            string json = JsonConvert.SerializeObject(requst);
-            var buffer = System.Text.Encoding.UTF8.GetBytes(json);
-            var byteContent = new ByteArrayContent(buffer);
-            byteContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-            var response = httpClient.PostAsync("https://localhost:44350/api/AdminApprove", byteContent);
-            var respons2 = response.Result;
-            string responsestr = response.Result.Content.ReadAsStringAsync().Result;
+            adminApproveRequstModel.disapprove = 2;
+            adminApproveRequstModel.username = username;
 
-            var account = JsonConvert.DeserializeObject<ResponseModel>(responsestr);
+            var account = JsonConvert.DeserializeObject<ResponseModel.StatusResponseModel>(api.apiadminapprove(adminApproveRequstModel));
 
-            if (account.status == true)
+            if (account.status == "true")
             {
                 string message = "Success";
                 MessageBox.Show(message);
@@ -201,6 +154,7 @@ namespace WebApp3
 
 
         }
+     
         protected void home(object sender, EventArgs e)
         {
             Response.Redirect("Default.aspx");
@@ -212,7 +166,7 @@ namespace WebApp3
 
         }
 
-
+       
 
     }
 }
